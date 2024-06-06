@@ -1,0 +1,19 @@
+{
+  "name": "custom-youtube",
+  "version": "1.0.0",
+  "description": "Custom youtube backend",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [
+    "Youtube",
+    "backend"
+  ],
+  "author": "Genius",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.3"
+  }
+}
