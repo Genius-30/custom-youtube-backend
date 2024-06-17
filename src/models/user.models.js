@@ -1,5 +1,5 @@
-import mongoose, { Schema } from 'mongoose';
-import bcrypt from 'bcrypt';
+import mongoose, { Schema } from "mongoose";
+import bcrypt from "bcrypt";
 
 const userSchema = Schema(
   {
@@ -20,9 +20,9 @@ const userSchema = Schema(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
-      min: [6, 'Password must be atleast 6 characters long!'],
-      max: [20, 'Password must be between 6-20 characters!'],
+      required: [true, "Password is required"],
+      min: [6, "Password must be atleast 6 characters long!"],
+      max: [20, "Password must be between 6-20 characters!"],
     },
     fullName: {
       type: String,
@@ -39,7 +39,7 @@ const userSchema = Schema(
     watchHistory: [
       {
         type: Schema.Types.ObjectId,
-        ref: 'Video',
+        ref: "Video",
       },
     ],
     refreshToken: {
@@ -51,11 +51,10 @@ const userSchema = Schema(
   }
 );
 
-userSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
-    this.password = bcrypt.hash(this.password, 10);
+userSchema.pre("save", async function () {
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 10);
   }
-  next();
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {
@@ -78,4 +77,4 @@ userSchema.methods.generateRefreshToken = function () {
   });
 };
 
-export const User = mongoose.model('User', userSchema);
+export const User = mongoose.model("User", userSchema);
