@@ -24,28 +24,32 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   if (!email.includes("@")) {
-    throw new ApiError("Invalid email!", 400);
+    throw new ApiError("Email must contains '@' symbol.", 400);
   }
 
-  const isUserExist = User.findOne({ $or: [{ userName }, { email }] });
+  const isUserExist = await User.findOne({ $or: [{ userName }, { email }] });
 
   if (isUserExist) {
     throw new ApiError("User already exists!", 409);
   }
 
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  console.log(avatarLocalPath);
-
-  const coverImgLocalPath = req.files?.coverImage[0]?.path;
-  console.log(coverImgLocalPath);
+  let coverImgLocalPath;
+  if (
+    req.files &&
+    Array.isArray(req.files.coverImage) &&
+    req.files.coverImage.length > 0
+  ) {
+    coverImgLocalPath = req.files.coverImage[0].path;
+  }
 
   if (!avatarLocalPath) {
     throw new ApiError("Avatar is required!", 400);
-  } else {
-    const avatar = await uploadOnCloudinary(avatarLocalPath);
-    if (!avatar) {
-      throw new ApiError("Avatar upload failed!", 500);
-    }
+  }
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  if (!avatar) {
+    throw new ApiError("Avatar upload failed!", 500);
   }
 
   const coverImage = await uploadOnCloudinary(coverImgLocalPath);
