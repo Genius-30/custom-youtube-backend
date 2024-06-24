@@ -248,7 +248,7 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     throw new ApiError("Please provide at least one field to update!", 400);
   }
 
-  const user = User.findById(req.user?._id);
+  const user = await User.findById(req.user?._id);
 
   if (
     user.userName === userName ||
@@ -342,16 +342,16 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
 });
 
 const getUserChannelDetails = asyncHandler(async (req, res) => {
-  const { userName } = req.params;
+  const { username } = req.params;
 
-  if (!userName) {
+  if (!username) {
     throw new ApiError("Username is missing!", 400);
   }
 
   const channel = await User.aggregate([
     {
       $match: {
-        userName: userName.toLowerCase(),
+        userName: username.toLowerCase(),
       },
     },
     {
@@ -411,7 +411,7 @@ const getUserWatchHistory = asyncHandler(async (req, res) => {
   const user = await User.aggregate([
     {
       $match: {
-        _id: new mongoose.Types.ObjectId.createFromBase64(req.user._id),
+        _id: new mongoose.Types.ObjectId(req.user._id),
       },
     },
     {

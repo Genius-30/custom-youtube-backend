@@ -30,7 +30,7 @@ const uploadOnCloudinary = async (localFilePath) => {
 const deleteFromCloudinary = async (url) => {
   try {
     const publicId = url.split("/").pop().split(".")[0];
-    await cloudinary.uploader.destroy(publicId, { resource_type: "auto" });
+    await cloudinary.uploader.destroy(publicId, { resource_type: "image" });
   } catch (error) {
     console.error(
       "Error occurred while deleting file from Cloudinary: ",
