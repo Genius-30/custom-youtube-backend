@@ -248,16 +248,6 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     throw new ApiError("Please provide at least one field to update!", 400);
   }
 
-  const user = await User.findById(req.user?._id);
-
-  if (
-    user.userName === userName ||
-    user.fullName === fullName ||
-    user.email === email
-  ) {
-    throw new ApiError("No changes detected!", 400);
-  }
-
   const updatedUser = await User.findByIdAndUpdate(
     req.user?._id,
     {
@@ -265,6 +255,10 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     },
     { new: true }
   ).select("-password");
+
+  if (!updatedUser) {
+    throw new ApiError("User not found!", 404);
+  }
 
   return res
     .status(200)
