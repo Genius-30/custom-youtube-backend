@@ -7,11 +7,15 @@ import {
 } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 const generateAccessAndRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
+    if (!isValidObjectId(userId)) {
+      throw new ApiError("Invalid User Id", 400);
+    }
+
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
@@ -152,8 +156,8 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
-  await User.findByIdAndUpdate(
-    req.user._id,
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
     {
       $unset: {
         refreshToken: 1, //removes the field from document
@@ -161,6 +165,10 @@ const logoutUser = asyncHandler(async (req, res) => {
     },
     { new: true }
   );
+
+  if (!user) {
+    throw new ApiError("User not found for logout!", 404);
+  }
 
   return res
     .status(200)
