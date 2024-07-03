@@ -3,12 +3,13 @@ import { Video } from "../models/video.models.js";
 import { Subscription } from "../models/subscription.models.js";
 import { Tweet } from "../models/tweet.model.js";
 import { Like } from "../models/like.model.js";
+import { User } from "../models/user.models.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const getChannelStats = asyncHandler(async (req, res) => {
-  const { channelId } = req.params;
+  const channelId = req.user?._id;
 
   const channelObjectId = new mongoose.Types.ObjectId(channelId);
 
@@ -63,7 +64,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
 });
 
 const getChannelVideos = asyncHandler(async (req, res) => {
-  const { userId } = req.user?._id;
+  const userId = req.user?._id;
 
   if (!userId) {
     throw new ApiError(400, "User not found");
