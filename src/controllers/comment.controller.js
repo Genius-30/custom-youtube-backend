@@ -3,9 +3,9 @@ import { Comment } from "../models/comment.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { Like } from "../models/like.model.js";
 
 const getVideoComments = asyncHandler(async (req, res) => {
-  //TODO: get all comments for a video
   const { videoId } = req.params;
   const { page = 1, limit = 10 } = req.query;
 
@@ -13,7 +13,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid video id");
   }
 
-  const getAllComments = await Comment.aggregate([
+  const pipeline = [
     {
       $match: { video: new mongoose.Types.ObjectId(videoId) },
     },
@@ -64,11 +64,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         },
       },
     },
-  ]);
-
-  if (!getAllComments) {
-    throw new ApiError(500, "No comments found!");
-  }
+  ];
 
   const options = {
     page: parseInt(page, 1),
@@ -76,7 +72,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
   };
 
   const videoComments = await Comment.aggregatePaginate(
-    getAllComments,
+    Comment.aggregate(pipeline),
     options
   );
 
@@ -120,7 +116,7 @@ const addComment = asyncHandler(async (req, res) => {
   }
 
   return res
-    .statud(200)
+    .status(200)
     .json(
       new ApiResponse(200, createdComment, "Comment created successfully!")
     );
@@ -180,7 +176,7 @@ const deleteComment = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid Comment ID");
   }
 
-  const comment = await Comment.findById(CommentId);
+  const comment = await Comment.findById(commentId);
 
   if (!comment) {
     throw new ApiError("Comment not found!", 404);
@@ -196,10 +192,16 @@ const deleteComment = asyncHandler(async (req, res) => {
     throw new ApiError("Comment not deleted!", 500);
   }
 
+  const deleteCommentLikes = await Like.deleteMany({ comment: commentId });
+
+  if (!deleteCommentLikes) {
+    throw new ApiError("Comment likes not deleted!", 500);
+  }
+
   return res
     .status(200)
     .json(
-      new ApiResponse(200, deletedComment, "Comment updated successfully!")
+      new ApiResponse(200, deletedComment, "Comment deleted successfully!")
     );
 });
 
