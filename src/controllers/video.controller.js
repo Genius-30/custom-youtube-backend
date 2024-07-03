@@ -320,6 +320,12 @@ const deleteVideo = asyncHandler(async (req, res) => {
     throw new ApiError("Video not found while deleting!", 404);
   }
 
+  const deleteVideoLikes = await Like.deleteMany({ video: videoId });
+
+  if (!deleteVideoLikes) {
+    throw new ApiError("Video likes not deleted!", 500);
+  }
+
   await deleteFromCloudinary(video.thumbnail);
   await deleteFromCloudinary(video.videoFile);
 
