@@ -12,7 +12,7 @@ app.use(
   })
 );
 app.use(express.json({ limit: limit }));
-app.use(urlencoded({ etended: true, limit: limit }));
+app.use(urlencoded({ extended: true, limit: limit }));
 app.use(express.static("public"));
 app.use(cookieParser());
 

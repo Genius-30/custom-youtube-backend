@@ -1,6 +1,12 @@
 const asyncHandler = (func) => {
   return (req, res, next) => {
     Promise.resolve(func(req, res, next)).catch((error) => {
+      let statusCode = error.statusCode || 500;
+      if (statusCode < 100 || statusCode > 599) {
+        console.error(`Invalid status code: ${statusCode}`);
+        statusCode = 500;
+      }
+
       res
         .status(error.code || 500)
         .json({ success: false, message: error.message });

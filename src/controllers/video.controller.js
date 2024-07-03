@@ -8,11 +8,9 @@ import {
   uploadOnCloudinary,
   deleteFromCloudinary,
 } from "../utils/cloudinary.js";
-import { Subscription } from "../models/subscription.models.js";
 
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
-  //TODO: get all videos based on query, sort, pagination
 
   if (!isValidObjectId(userId)) {
     throw new ApiError("Invalid user ID", 400);
@@ -21,25 +19,21 @@ const getAllVideos = asyncHandler(async (req, res) => {
   const pipeline = [];
 
   if (userId) {
-    pipeline.push({ $match: { onwer: new mongoose.Types.ObjectId(userId) } });
+    pipeline.push({ $match: { owner: new mongoose.Types.ObjectId(userId) } });
   }
+
+  const queryOptions = "i";
 
   if (query) {
     pipeline.push({
       $match: {
         title: {
           $regex: query,
-          options: options,
+          options: queryOptions,
         },
       },
     });
   }
-
-  pipeline.push({
-    $match: {
-      isPublished: true,
-    },
-  });
 
   pipeline.push({
     $match: {
@@ -72,25 +66,29 @@ const getAllVideos = asyncHandler(async (req, res) => {
         {
           $project: {
             username: 1,
-            avatar: 1,
+            "avatar.url": 1,
           },
         },
       ],
     },
+  });
+
+  pipeline.push({
     $unwind: {
       path: "$ownerDetails",
       preserveNullAndEmptyArrays: true,
     },
   });
 
-  const videoAggregate = await Video.aggregate(pipeline);
-
   const options = {
-    page: parseInt(page),
-    limit: parseInt(limit),
+    page: parseInt(page, 10),
+    limit: parseInt(limit, 10),
   };
 
-  const video = await Video.aggregatePaginate(videoAggregate, options);
+  const video = await Video.aggregatePaginate(
+    Video.aggregate(pipeline),
+    options
+  );
 
   return res
     .status(200)
@@ -105,10 +103,6 @@ const publishVideo = asyncHandler(async (req, res) => {
 
   if (!(title && description)) {
     throw new ApiError("Title and description are required", 400);
-  }
-
-  if (!isPublished || typeof isPublished !== "boolean") {
-    throw new ApiError("isPublished must be a boolean", 400);
   }
 
   if (!(thumbailLocalPath && videoFileLocalPath)) {
@@ -268,10 +262,13 @@ const updateVideo = asyncHandler(async (req, res) => {
     throw new ApiError("Please provide atleast one field to update!", 400);
   }
 
-  const newThumbnail = await uploadOnCloudinary(newThumbnailLocalPath);
+  let newThumbnail;
 
-  if (!newThumbnail) {
-    throw new ApiError("Failed to upload thumbnail on cloudinary", 500);
+  if (newThumbnailLocalPath) {
+    newThumbnail = await uploadOnCloudinary(newThumbnailLocalPath);
+    if (!newThumbnail) {
+      throw new ApiError("Failed to upload thumbnail on cloudinary", 500);
+    }
   }
 
   const video = await Video.findById(videoId);
@@ -290,7 +287,7 @@ const updateVideo = asyncHandler(async (req, res) => {
         title,
         description,
         isPublished,
-        thumbnail: newThumbnail.url,
+        thumbnail: newThumbnail?.url,
       },
     },
     { new: true }
@@ -338,7 +335,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     throw new ApiError("Invalid videoId", 400);
   }
 
-  const video = await findById(videoId);
+  const video = await Video.findById(videoId);
   if (!video) {
     throw new ApiError(
       "Video not found while attempting to toggle publish status!",
